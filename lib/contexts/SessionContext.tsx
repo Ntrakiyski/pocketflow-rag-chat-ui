@@ -100,7 +100,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             );
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(`Error polling session ${sessionId}:`, err);
         // Stop polling on error to prevent infinite loops
         clearInterval(interval);
@@ -112,7 +112,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         updateSessionStatus(sessionId, {
           session_id: sessionId,
           status: "error",
-          message: err.message || "Polling error",
+          message: err instanceof Error ? err.message : "Polling error",
         });
       }
     }, 5000); // Poll every 5 seconds
@@ -139,12 +139,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       console.warn(
         "SessionContext: `fetchSessions` currently does not retrieve sessions from a backend list. Implement Supabase table for user-session_id mapping.",
       );
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch sessions.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch sessions.");
     } finally {
       setLoading(false);
     }
-  }, [user?.id, userLoading, startPolling]);
+  }, [user?.id, userLoading]);
 
   // Function to add a new session to the local state and start polling
   const addSession = useCallback(

@@ -33,7 +33,7 @@ export function SessionList() {
     try {
       const response = await ragApiClient.generateFaqs(sessionId);
       updateSessionStatus(sessionId, response); // Update local state with new status
-    } catch (err: any) {
+    } catch (err: unknown) {
       setFaqErrorSessionId(sessionId);
       console.error(`Failed to generate FAQs for session ${sessionId}:`, err);
     } finally {
@@ -80,8 +80,8 @@ export function SessionList() {
               ) : (
                 <UploadCloud size={18} />
               )}
-              {session.input_value?.length > 30
-                ? `${session.input_value.substring(0, 27)}...`
+              {(session.input_value ?? "").length > 30
+                ? `${session.input_value?.substring(0, 27)}...`
                 : session.input_value || "Untitled Session"}
             </CardTitle>
             <CardDescription>

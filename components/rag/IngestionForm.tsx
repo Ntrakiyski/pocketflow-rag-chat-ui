@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ragApiClient } from "@/lib/api/rag-api-client";
 import { useSessions } from "@/lib/contexts/SessionContext";
-import { Loader2, UploadCloud, ExternalLink } from "lucide-react"; // Added ExternalLink for website icon
+import { Loader2, UploadCloud } from "lucide-react";
 
 export function IngestionForm() {
   const [url, setUrl] = useState("");
@@ -51,8 +51,12 @@ export function IngestionForm() {
 
       setUrl("");
       setFile(null);
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred during ingestion.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error 
+          ? err.message 
+          : "An unexpected error occurred during ingestion."
+      );
       console.error("Ingestion error:", err);
     } finally {
       setIsLoading(false);

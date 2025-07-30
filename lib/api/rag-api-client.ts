@@ -3,7 +3,6 @@
 import {
     IngestResponse,
     StatusResponse,
-    ChatRequest,
     ChatResponse,
     FAQGenerationResponse,
     SessionData,
@@ -16,7 +15,7 @@ import {
   async function callApi<T>(
     endpoint: string,
     method: string,
-    body?: any,
+    body?: unknown,
     headers?: HeadersInit,
   ): Promise<T> {
     const url = `${RAG_API_BASE_URL}${endpoint}`;
