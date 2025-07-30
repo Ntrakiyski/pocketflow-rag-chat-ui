@@ -1,7 +1,14 @@
+// components/env-var-warning.tsx
+
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 
-export function EnvVarWarning() {
+// Component now accepts a prop for hasEnvVars
+export function EnvVarWarning({ hasEnvVars }: { hasEnvVars: boolean }) {
+  if (hasEnvVars) {
+    return null; // Don't render if env vars are present
+  }
+
   return (
     <div className="flex gap-4 items-center">
       <Badge variant={"outline"} className="font-normal">

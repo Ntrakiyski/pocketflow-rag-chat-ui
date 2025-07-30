@@ -1,6 +1,8 @@
+// lib/supabase/middleware.ts
+
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { hasEnvVars } from "../utils";
+import { checkSupabaseEnvVars } from "../env"; // NEW IMPORT
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -9,7 +11,7 @@ export async function updateSession(request: NextRequest) {
 
   // If the env vars are not set, skip middleware check. You can remove this
   // once you setup the project.
-  if (!hasEnvVars) {
+  if (!checkSupabaseEnvVars()) {
     return supabaseResponse;
   }
 
