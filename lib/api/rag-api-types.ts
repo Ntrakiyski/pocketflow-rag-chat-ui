@@ -17,6 +17,7 @@ export type IngestResponse = {
   
   export type ChatRequest = {
     question: string;
+    model_id?: string;
   };
   
   export type ChatResource = {

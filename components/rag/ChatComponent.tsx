@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { ragApiClient } from "@/lib/api/rag-api-client";
 import { ChatMessage, ChatResource, SessionData } from "@/lib/api/rag-api-types";
 import { Loader2, Send, Bot, User, FileText } from "lucide-react";
@@ -27,6 +33,11 @@ export function ChatComponent({ sessionId }: ChatComponentProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState({
+    label: "Fast",
+    modelName: "Grok-3-mini",
+    id: "x-ai/grok-3-mini"
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Function to scroll to the bottom of the chat
@@ -74,7 +85,11 @@ export function ChatComponent({ sessionId }: ChatComponentProps) {
     setError(null);
 
     try {
-      const response = await ragApiClient.chat(sessionId, inputMessage);
+      const response = await ragApiClient.chat(
+        sessionId, 
+        inputMessage,
+        selectedModel.id
+      );
       const assistantMessage: ChatMessage = {
         role: "assistant",
         content: response.answer,
@@ -104,7 +119,7 @@ export function ChatComponent({ sessionId }: ChatComponentProps) {
       className={`flex gap-3 p-4 rounded-lg ${
         message.role === "user"
           ? "bg-primary-foreground text-primary-foreground-content justify-end"
-          : "bg-muted text-muted-foreground"
+          : ""
       }`}
     >
       {message.role === "assistant" && (
@@ -170,20 +185,69 @@ export function ChatComponent({ sessionId }: ChatComponentProps) {
       </CardContent>
       <Separator className="my-0" />
       <CardFooter className="p-4">
-        <form onSubmit={handleSendMessage} className="flex w-full gap-2">
-          <Input
-            type="text"
-            placeholder="Ask a question..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button type="submit" disabled={isLoading}>
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
-        {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+        <div className="flex flex-col w-full gap-2">
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-32">
+                  {selectedModel.label} Answer
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem 
+                  onClick={() => setSelectedModel({
+                    label: "Fast",
+                    modelName: "Grok-3-mini",
+                    id: "x-ai/grok-3-mini"
+                  })}
+                >
+                  <div className="flex flex-col">
+                    <span>Fast</span>
+                    <span className="text-xs text-muted-foreground">Grok-3-mini</span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setSelectedModel({
+                    label: "Balanced",
+                    modelName: "Gemini-2.5-flash",
+                    id: "google/gemini-2.5-flash"
+                  })}
+                >
+                  <div className="flex flex-col">
+                    <span>Balanced</span>
+                    <span className="text-xs text-muted-foreground">Gemini-2.5-flash</span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setSelectedModel({
+                    label: "Smart",
+                    modelName: "Gemini-2.5-pro",
+                    id: "google/gemini-2.5-pro"
+                  })}
+                >
+                  <div className="flex flex-col">
+                    <span>Smart</span>
+                    <span className="text-xs text-muted-foreground">Gemini-2.5-pro</span>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <form onSubmit={handleSendMessage} className="flex flex-1 gap-2">
+              <Input
+                type="text"
+                placeholder="Ask a question..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button type="submit" disabled={isLoading}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+          {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+        </div>
       </CardFooter>
     </Card>
   );

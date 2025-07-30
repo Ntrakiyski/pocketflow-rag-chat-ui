@@ -31,7 +31,7 @@ export function IngestionForm() {
         formData.append("pdf_file", file);
         response = await ragApiClient.ingestContent(formData);
       } else if (url) {
-        const formData = new FormData(); // Ensure website also uses FormData
+        const formData = new FormData();
         formData.append("input_type", "website");
         formData.append("web_url", url);
         response = await ragApiClient.ingestContent(formData);
@@ -40,23 +40,29 @@ export function IngestionForm() {
         return;
       }
 
-      addSession({
+      // addSession is now async, so await it
+      await addSession({
         user_session_id: response.session_id,
         input_type: file ? "pdf" : "website",
         input_value: file ? file.name : url,
         status: response.status,
         message: response.message,
-        // Other optional fields are omitted, SessionContext will provide defaults
       });
 
       setUrl("");
       setFile(null);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error 
-          ? err.message 
-          : "An unexpected error occurred during ingestion."
-      );
+      // Improved error message for network/CORS issues
+      let errorMessage = "An unexpected error occurred during ingestion.";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        if (err.message.includes("Failed to fetch")) {
+          errorMessage = "Network error: Could not connect to the RAG API. " +
+                         "Please ensure the Python API is running and accessible (check CORS and URL in .env.local). " +
+                         "Original error: " + err.message;
+        }
+      }
+      setError(errorMessage);
       console.error("Ingestion error:", err);
     } finally {
       setIsLoading(false);
@@ -80,7 +86,7 @@ export function IngestionForm() {
               value={url}
               onChange={(e) => {
                 setUrl(e.target.value);
-                setFile(null); // Clear file selection if URL is typed
+                setFile(null);
               }}
               disabled={isLoading}
             />
@@ -101,7 +107,7 @@ export function IngestionForm() {
               accept=".pdf"
               onChange={(e) => {
                 setFile(e.target.files ? e.target.files[0] : null);
-                setUrl(""); // Clear URL if file is selected
+                setUrl("");
               }}
               disabled={isLoading}
             />

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Modal } from "@/components/ui/modal"; // Import Modal
 import { useSessions } from "@/lib/contexts/SessionContext";
 import { Loader2, MessageSquare, BookText, ExternalLink, UploadCloud } from "lucide-react"; // Added UploadCloud
 import { ragApiClient } from "@/lib/api/rag-api-client"; // For FAQ generation
@@ -26,6 +27,8 @@ export function SessionList() {
   const [faqErrorSessionId, setFaqErrorSessionId] = useState<string | null>(
     null,
   );
+  const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+  const [selectedFaqsForModal, setSelectedFaqsForModal] = useState<any>(null); // Consider a more specific type if possible
 
   const handleGenerateFaqs = async (sessionId: string) => {
     setFaqLoadingSessionId(sessionId);
@@ -33,12 +36,21 @@ export function SessionList() {
     try {
       const response = await ragApiClient.generateFaqs(sessionId);
       updateSessionStatus(sessionId, response); // Update local state with new status
+      // Fetch the updated session data to display in modal
+      const updatedSessionData = await ragApiClient.getSession(sessionId);
+      setSelectedFaqsForModal(updatedSessionData);
+      setIsFaqModalOpen(true);
     } catch (err: unknown) {
       setFaqErrorSessionId(sessionId);
       console.error(`Failed to generate FAQs for session ${sessionId}:`, err);
     } finally {
       setFaqLoadingSessionId(null);
     }
+  };
+
+  const handleCloseFaqModal = () => {
+    setIsFaqModalOpen(false);
+    setSelectedFaqsForModal(null);
   };
 
   if (loading) {
@@ -74,16 +86,23 @@ export function SessionList() {
       {sessions.map((session) => (
         <Card key={session.user_session_id}>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-lg flex items-center gap-2 flex-wrap">
               {session.input_type === "website" ? (
                 <ExternalLink size={18} />
               ) : (
                 <UploadCloud size={18} />
               )}
-              {(session.input_value ?? "").length > 30
-                ? `${session.input_value?.substring(0, 27)}...`
-                : session.input_value || "Untitled Session"}
+              <span className="truncate">
+                {(session.input_value ?? "").length > 30
+                  ? `${formatWebsiteUrl(session.input_value).substring(0, 27)}...`
+                  : formatWebsiteUrl(session.input_value) || "Untitled Session"}
+              </span>
             </CardTitle>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline">
+                {session.input_type === "website" ? "Web" : "PDF"}
+              </Badge>
+            </div>
             <CardDescription>
               Session ID:{" "}
               <span className="font-mono text-xs">
@@ -148,24 +167,48 @@ export function SessionList() {
                 Failed to generate FAQs for this session.
               </p>
             )}
-            {session.generated_faqs && session.generated_faqs.length > 0 && (
-              <div className="mt-4 text-xs text-muted-foreground">
-                <h4 className="font-semibold mb-1">Generated FAQs:</h4>
-                <ul className="list-disc list-inside">
-                  {session.generated_faqs.slice(0, 3).map((faq, index) => (
-                    <li key={index}>
-                      **Q:** {faq.question}
-                    </li>
-                  ))}
-                  {session.generated_faqs.length > 3 && (
-                    <li>...and {session.generated_faqs.length - 3} more</li>
-                  )}
-                </ul>
-              </div>
-            )}
+            {/* Removed inline FAQ display */}
           </CardContent>
         </Card>
       ))}
+
+      <Modal
+        isOpen={isFaqModalOpen}
+        onClose={handleCloseFaqModal}
+        title="Generated FAQs"
+        className="max-w-3xl"
+      >
+        {selectedFaqsForModal && selectedFaqsForModal.generated_faqs &&
+          selectedFaqsForModal.generated_faqs.length > 0 ? (
+          <div className="max-h-96 overflow-y-auto">
+            <ul className="space-y-4">
+              {selectedFaqsForModal.generated_faqs.map((faq: any, index: number) => (
+                <li key={index} className="border-b pb-4 last:border-b-0">
+                  <p className="font-semibold text-primary">Q: {faq.question}</p>
+                  <p className="text-muted-foreground mt-1">A: {faq.answer}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-muted-foreground">No FAQs generated yet or an error occurred.</p>
+        )}
+      </Modal>
     </div>
   );
+}
+
+// Helper function to clean website URLs
+function formatWebsiteUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  let formattedUrl = url;
+  if (url.startsWith("https://")) {
+    formattedUrl = url.substring(8);
+  } else if (url.startsWith("http://")) {
+    formattedUrl = url.substring(7);
+  }
+  if (formattedUrl.startsWith("www.")) {
+    formattedUrl = formattedUrl.substring(4);
+  }
+  return formattedUrl;
 }

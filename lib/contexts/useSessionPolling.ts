@@ -20,16 +20,19 @@ export function useSessionPolling({
   const updateSessionStatus = useCallback(
     (sessionId: string, statusResponse: StatusResponse) => {
       setSessions((prevSessions) => {
-        const updatedSessions = prevSessions.map((session) =>
-          session.user_session_id === sessionId
-            ? {
-                ...session,
-                status: statusResponse.status,
-                message: statusResponse.message,
-                context_is_ready: statusResponse.status === "ready",
-              }
-            : session,
-        );
+        const updatedSessions = prevSessions.map((session) => {
+          if (session.user_session_id === sessionId) {
+            // If we have generated FAQs, consider the session ready regardless of status
+            const hasFAQs = session.generated_faqs && session.generated_faqs.length > 0;
+            return {
+              ...session,
+              status: hasFAQs ? "ready" : statusResponse.status,
+              message: hasFAQs ? "FAQs generated" : statusResponse.message,
+              context_is_ready: hasFAQs || statusResponse.status === "ready",
+            };
+          }
+          return session;
+        });
 
         // After updating the status, if it's still processing/faq_processing,
         // ensure polling is active for this session.
@@ -43,19 +46,34 @@ export function useSessionPolling({
                 // Call the internal polling logic directly, not the memoized startPolling
                 // This is a common pattern when a callback needs to trigger another callback
                 // that depends on a ref, without creating a dependency loop.
+                // Add timeout safeguard for FAQ processing
+                const timeout = setTimeout(() => {
+                    if (pollingIntervalsRef.current.has(sessionId)) {
+                        console.warn(`FAQ processing timeout for session ${sessionId}`);
+                        clearInterval(pollingIntervalsRef.current.get(sessionId));
+                        pollingIntervalsRef.current.delete(sessionId);
+                        updateSessionStatus(sessionId, {
+                            session_id: sessionId,
+                            status: "error",
+                            message: "FAQ generation timeout",
+                        });
+                    }
+                }, 300000); // 5 minute timeout
+
                 const interval = setInterval(async () => {
                     try {
                         const statusResp = await ragApiClient.getIngestionStatus(sessionId);
                         console.log(`Polling status for ${sessionId}:`, statusResp.status);
                         updateSessionStatus(sessionId, statusResp); // Recursive call is fine here
 
-                        if (statusResp.status === "ready" || statusResp.status === "error") {
+                        const fullSessionData = await ragApiClient.getSession(sessionId);
+                        if (statusResp.status === "ready" || 
+                            statusResp.status === "error" || 
+                            (fullSessionData.generated_faqs && fullSessionData.generated_faqs.length > 0)) {
+                            clearTimeout(timeout);
                             clearInterval(interval);
                             pollingIntervalsRef.current.delete(sessionId);
-                            if (statusResp.status === "ready") {
-                                const fullSessionData = await ragApiClient.getSession(sessionId);
-                                setSessions(p => p.map(s => s.user_session_id === sessionId ? fullSessionData : s));
-                            }
+                            setSessions(p => p.map(s => s.user_session_id === sessionId ? fullSessionData : s));
                         }
                     } catch (err: any) {
                         console.error(`Error polling session ${sessionId}:`, err);
@@ -84,6 +102,20 @@ export function useSessionPolling({
       // Only start if not already polling
       if (!pollingIntervalsRef.current.has(sessionId)) {
         console.log(`[Polling] Initial start polling for ${sessionId}`);
+        // Add timeout safeguard for FAQ processing
+        const timeout = setTimeout(() => {
+            if (pollingIntervalsRef.current.has(sessionId)) {
+                console.warn(`FAQ processing timeout for session ${sessionId}`);
+                clearInterval(pollingIntervalsRef.current.get(sessionId));
+                pollingIntervalsRef.current.delete(sessionId);
+                updateSessionStatus(sessionId, {
+                    session_id: sessionId,
+                    status: "error",
+                    message: "FAQ generation timeout",
+                });
+            }
+        }, 300000); // 5 minute timeout
+
         const interval = setInterval(async () => {
           try {
             const statusResponse = await ragApiClient.getIngestionStatus(
@@ -92,22 +124,20 @@ export function useSessionPolling({
             console.log(`Polling status for ${sessionId}:`, statusResponse.status);
             updateSessionStatus(sessionId, statusResponse); // This call is now safe
 
-            if (
-              statusResponse.status === "ready" ||
-              statusResponse.status === "error"
-            ) {
-              clearInterval(interval);
-              pollingIntervalsRef.current.delete(sessionId);
-              if (statusResponse.status === "ready") {
-                const fullSessionData = await ragApiClient.getSession(sessionId);
+            const fullSessionData = await ragApiClient.getSession(sessionId);
+            if (statusResponse.status === "ready" ||
+                statusResponse.status === "error" ||
+                (fullSessionData.generated_faqs && fullSessionData.generated_faqs.length > 0)) {
+                clearTimeout(timeout);
+                clearInterval(interval);
+                pollingIntervalsRef.current.delete(sessionId);
                 setSessions((prevSessions) =>
-                  prevSessions.map((session) =>
-                    session.user_session_id === sessionId
-                      ? fullSessionData
-                      : session,
-                  ),
+                    prevSessions.map((session) =>
+                        session.user_session_id === sessionId
+                            ? fullSessionData
+                            : session,
+                    ),
                 );
-              }
             }
           } catch (err: any) {
             console.error(`Error polling session ${sessionId}:`, err);

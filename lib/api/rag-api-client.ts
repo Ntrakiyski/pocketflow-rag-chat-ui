@@ -89,9 +89,10 @@ import {
      * @param sessionId - The ID of the session.
      * @param question - The user's question.
      */
-    chat: async (sessionId: string, question: string): Promise<ChatResponse> => {
+    chat: async (sessionId: string, question: string, modelId?: string): Promise<ChatResponse> => {
       return callApi<ChatResponse>(`/api/v1/chat/${sessionId}`, "POST", {
         question,
+        model_id: modelId,
       });
     },
   
