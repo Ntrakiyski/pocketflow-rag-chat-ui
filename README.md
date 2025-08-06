@@ -18,7 +18,7 @@ This is a starter kit for building applications with Next.js and Supabase, featu
    ```
 
 ## Live Demo
-Test the live version: [https://pocketflow-ui.worfklow.org](https://pocketflow-ui.worfklow.org)
+Test the live version: [https://pocketflow-ui.worfklow.org/protected](https://pocketflow-ui.worfklow.org/protected)
 
 ## Tech Stack
 - **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
