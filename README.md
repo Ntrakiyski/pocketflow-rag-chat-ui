@@ -1,105 +1,58 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# PocketFlow RAG Chat UI
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+## Description
+This is a starter kit for building applications with Next.js and Supabase, featuring a complete authentication system and a Retrieval-Augmented Generation (RAG) chat interface. Users can sign up, ingest content from websites or PDFs, and then have conversations with an AI that uses the ingested documents as its knowledge base.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
-
-## Features
-
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
-
-## Demo
-
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
-
-## Deploy to Vercel
-
-Vercel deployment will guide you through creating a Supabase account and project.
-
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
-
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
-
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
-
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
+## Run Locally
+1. Clone repository:
    ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
-
+   git clone https://github.com/ntrakiyski/pocketflow-rag-chat-ui.git
+   cd pocketflow-rag-chat-ui
+   ```2. Install dependencies:
    ```bash
-   yarn create next-app --example with-supabase with-supabase-app
+   pnpm install
    ```
-
+3. Run application:
    ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
+   pnpm dev
    ```
 
-3. Use `cd` to change into the app's directory
+## Live Demo
+Test the live version: [https://pocketflow-ui.worfklow.org](https://pocketflow-ui.worfklow.org)
 
-   ```bash
-   cd with-supabase-app
-   ```
+## Tech Stack
+- **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js (App Router), Supabase
+- **Database**: Supabase (PostgreSQL)
+- **Tools**: Vercel, Git, pnpm, TypeScript
+- **Other**: Supabase SSR (Authentication), REST API
 
-4. Rename `.env.example` to `.env.local` and update the following:
+## Approach & Architecture
+The application is a full-stack Next.js project using a client-server architecture. It integrates Supabase for backend-as-a-service functionalities and a custom, separate backend API for the core RAG (Retrieval-Augmented Generation) capabilities.
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+### Custom RAG Backend API
+This UI is powered by a custom FastAPI backend that handles all the heavy lifting of document processing and AI chat logic.
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+-   **High-Level Functionality**: The API ingests content from websites or PDFs, creates vector embeddings, stores them in a vector database, and uses this data to provide intelligent, context-aware answers to user questions.
+-   **Architecture**: It uses a modular design with FastAPI for handling API requests, Celery for running heavy background tasks (like document ingestion and FAQ generation), Redis for managing session data and task queues, and Qdrant as the vector database for efficient AI searches.
+-   **Repository**: You can find the full backend implementation here: [https://github.com/Ntrakiyski/rag-chat-pocketflow-fastapi](https://github.com/Ntrakiyski/rag-chat-pocketflow-fastapi)
 
-5. You can now run the Next.js local development server:
+### Frontend and Data Flow
 
-   ```bash
-   npm run dev
-   ```
+- **Overall Architecture**: The application uses the Next.js App Router for both client-side interactivity and server-side rendering. Supabase manages all user authentication, while the custom RAG API handles all document-related and AI chat functions.
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+- **Key Components and Interactions**:
+    - **Supabase Authentication (`lib/supabase`, `app/auth/*`)**: The system uses `@supabase/ssr` for robust, cookie-based authentication. The `middleware.ts` file intercepts requests to protect routes and ensure users are logged in.
+    - **RAG API Client (`lib/api/rag-api-client.ts`)**: This client acts as a dedicated interface for the Next.js frontend to communicate with the custom FastAPI backend.
+    - **State Management (`lib/contexts/*`)**:
+        - `UserContext.tsx`: Tracks the authenticated user's state via Supabase.
+        - `SessionContext.tsx`: Manages the lifecycle of document ingestion sessions, including polling the RAG API to check on the processing status.
+    - **UI Components (`components/rag/*`)**: `IngestionForm.tsx` handles document submission, `SessionList.tsx` displays the user's processed documents, and `ChatComponent.tsx` provides the main chat interface.
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
-
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
-
-## Feedback and issues
-
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+- **Data Flow Through the System**:
+    1. A user signs up or logs in via the UI, which interacts with **Supabase Auth**.
+    2. The user submits a document (URL or PDF) through the `IngestionForm`.
+    3. The UI sends the document to the **FastAPI RAG backend**, which starts a background ingestion task with **Celery** and immediately returns a `session_id`.
+    4. The Next.js app saves a record linking the `user_id` (from Supabase) and the `session_id` in its own **Supabase database**.
+    5. The UI polls the RAG API's status endpoint. Once the document is ready, the user can start a chat.
+    6. In the `ChatComponent`, messages are sent to the RAG API. The API searches the **Qdrant** vector database for relevant information, generates an answer using an LLM, and returns it to the UI.
